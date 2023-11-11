@@ -219,7 +219,7 @@ public class LayerTwoManager implements LayerTwoService {
              *      Insert the FlowRule to the designated output port.
              * Otherwise, we haven't learnt the output port yet. We need to flood this packet to all the ports.
              */
-            PortNumber outPort = macTable.get(dstMac);
+            PortNumber outPort = macTable.get(dstMac).getPortNumber();
 
             /**
              **
@@ -253,7 +253,7 @@ public class LayerTwoManager implements LayerTwoService {
              * else, the output port has not been learned yet.  Flood the packet to all ports using
              * the actLikeHub method
              */
-                actLikeHub(pc);
+                flood(pc);
             }
         }
 

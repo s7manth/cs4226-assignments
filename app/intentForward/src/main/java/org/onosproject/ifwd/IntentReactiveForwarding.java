@@ -137,9 +137,9 @@ public class IntentReactiveForwarding {
 
             /* Fetch incoming packet */
             InboundPacket packet = context.inPacket();
-            Ethernet ethPacket = pacekt.parsed();
+            Ethernet ethPacket = packet.parsed();
 
-            if (Object.isNull(ethPacket)) return;
+            if (ethPacket == null) return;
 
             /** 
              * [STEP 1] Extract Ethernet header
@@ -155,7 +155,7 @@ public class IntentReactiveForwarding {
              * * HINT: use setUpConnectivity() to install flow rule
              */
             Host dst = hostService.getHost(destinationId);
-            if (Object.isNull(dst)) {
+            if (dst == null) {
                 flood(context);
                 return;
             }
