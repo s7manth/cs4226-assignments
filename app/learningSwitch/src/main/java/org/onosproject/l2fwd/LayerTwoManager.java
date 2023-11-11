@@ -116,7 +116,7 @@ public class LayerTwoManager implements LayerTwoService {
                 .withTreatment(DefaultTrafficTreatment.builder().drop().build())
                 .withPriority(PacketPriority.CONTROL.priorityValue())
                 .forDevice(d.id())
-                .fromApp(L2FWD_APP)
+                .fromApp(appId)
                 .makeTemporary(30)
                 .build();
 
@@ -198,7 +198,6 @@ public class LayerTwoManager implements LayerTwoService {
              * [STEP 1] Extract Packet src/dstMac
              * HINT: use APIs in pc.inPacket().
              */
-            ConnectPoint cp = pc.inPacket().receivedFrom();
             Map<MacAddress, PortNumber> macTable = macTables.get(cp.deviceId());
             MacAddress srcMac = pc.inPacket().parsed().getSourceMAC();
             MacAddress dstMac = pc.inPacket().parsed().getDestinationMAC();
