@@ -208,7 +208,7 @@ public class LayerTwoManager implements LayerTwoService {
              * HINT: create new MacTableEntry with in port [cp.port()] and a default duration 60 [Duration.ofSeconds(60)].
              * HINT: add the pair srcMac and macTableEntry to macTable.
              */
-            macTable.put(srcMac, new MacTableEntry(cp.port()));
+            macTable.put(srcMac, new MacTableEntry(cp.port(), 60));
             
             /** 
              * [STEP 3] Lookup for destination host in MAC table
