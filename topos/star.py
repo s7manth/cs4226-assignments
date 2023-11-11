@@ -7,14 +7,16 @@ from mininet.cli import CLI
 from mininet.log import setLogLevel, info, debug
 from mininet.node import Host, RemoteController
 
-class TreeTopo( Topo ):
+class TreeTopo(Topo):
   """
   Tree topology
   """
 
-  def __init__(self, infileName = "star.in"):
+  def __init__(self):
     Topo.__init__(self)
-    self.infileName = infileName
+
+  def build(self):
+    infileName = "star.in"
     
     # Read input file
     with open(infileName) as f:
@@ -22,25 +24,24 @@ class TreeTopo( Topo ):
     
     config = [int(x) for x in lines[0].split()]
     print("config", config)
-    self.nHosts = config[0]
-    self.nSwitches = config[1]
-    self.nLinks = config[2]
-    self.links = [tuple(x.split(',')) for x in lines[1:]]
+    nHosts = config[0]
+    nSwitches = config[1]
+    nLinks = config[2]
+    links = [tuple(x.split(',')) for x in lines[1:]]
 
-  def build(self):
     # Add hosts
-    for h in range(1, self.nHosts + 1):
+    for h in range(1, nHosts + 1):
       host = self.addHost('h%d' % h)
         
     # Add switches 
-    for s in range(1, self.nSwitches + 1):
+    for s in range(1, nSwitches + 1):
       sconfig = {
         'dpid': "%016x" % s
       }
       switch = self.addSwitch('s%d' % s, **sconfig)
         
     # Add links
-    for link in self.links:
+    for link in links:
       self.addLink(link[0], link[1])
         
                     
