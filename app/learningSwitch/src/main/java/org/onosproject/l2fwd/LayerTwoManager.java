@@ -111,7 +111,7 @@ public class LayerTwoManager implements LayerTwoService {
                 .withSelector(DefaultTrafficSelector.builder()
                     .matchIPSrc(srcIpAddress.toIpPrefix())
                     .matchIPDst(dstIpAddress.toIpPrefix())
-                    .matchTcpDst(TpPort.toPort((int) dstPort.toLong()))
+                    .matchTcpDst(TpPort.tpPort((int) dstPort.toLong()))
                     .build())
                 .withTreatment(DefaultTrafficTreatment.builder().drop().build())
                 .withPriority(PacketPriority.CONTROL.priorityValue())
