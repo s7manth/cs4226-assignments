@@ -107,7 +107,7 @@ public class LayerTwoManager implements LayerTwoService {
 
             // HINT: use DefaultFlowRule to match packets' src/dst address and port
             // HINT2: apply withTreatment(DefaultTrafficTreatment.builder().drop().build()) to drop matched packet
-            DefaultFlowRule firewallRule = DefaultFlowRule.builder()
+            FlowRule firewallRule = DefaultFlowRule.builder()
                 .withSelector(DefaultTrafficSelector.builder()
                     .matchIPSrc(srcIpAddress.toIpPrefix())
                     .matchIPDst(dstIpAddress.toIpPrefix())
@@ -198,7 +198,7 @@ public class LayerTwoManager implements LayerTwoService {
              * [STEP 1] Extract Packet src/dstMac
              * HINT: use APIs in pc.inPacket().
              */
-            Map<MacAddress, PortNumber> macTable = macTables.get(cp.deviceId());
+            Map<MacAddress, MacTableEntry> macTable = macTables.get(cp.deviceId());
             MacAddress srcMac = pc.inPacket().parsed().getSourceMAC();
             MacAddress dstMac = pc.inPacket().parsed().getDestinationMAC();
 
@@ -208,7 +208,7 @@ public class LayerTwoManager implements LayerTwoService {
              * HINT: create new MacTableEntry with in port [cp.port()] and a default duration 60 [Duration.ofSeconds(60)].
              * HINT: add the pair srcMac and macTableEntry to macTable.
              */
-            macTable.put(srcMac, cp.port());
+            macTable.put(srcMac, new MacTableEntry(cp.port()));
             
             /** 
              * [STEP 3] Lookup for destination host in MAC table
