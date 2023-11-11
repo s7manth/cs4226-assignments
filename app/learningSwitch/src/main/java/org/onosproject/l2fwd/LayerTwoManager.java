@@ -109,9 +109,9 @@ public class LayerTwoManager implements LayerTwoService {
             // HINT2: apply withTreatment(DefaultTrafficTreatment.builder().drop().build()) to drop matched packet
             DefaultFlowRule firewallRule = DefaultFlowRule.builder()
                 .withSelector(DefaultTrafficSelector.builder()
-                    .matchIPSrc(srcIpAddress)
-                    .matchIPDst(dstIpAddress)
-                    .matchTcpDst(dstPort)
+                    .matchIPSrc(srcIpAddress.toIpPrefix())
+                    .matchIPDst(dstIpAddress.toIpPrefix())
+                    .matchTcpDst(TpPort.toPort((int) dstPort.toLong()))
                     .build())
                 .withTreatment(DefaultTrafficTreatment.builder().drop().build())
                 .withPriority(PacketPriority.CONTROL.priorityValue())
