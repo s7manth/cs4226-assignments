@@ -108,17 +108,16 @@ public class LayerTwoManager implements LayerTwoService {
             // HINT: use DefaultFlowRule to match packets' src/dst address and port
             // HINT2: apply withTreatment(DefaultTrafficTreatment.builder().drop().build()) to drop matched packet
             DefaultFlowRule firewallRule = DefaultFlowRule.builder()
-                .forDevice(d.id())
                 .withSelector(DefaultTrafficSelector.builder()
                     .matchIPSrc(srcIpAddress)
                     .matchIPDst(dstIpAddress)
                     .matchTcpDst(dstPort)
-                    // You might need additional match criteria depending on your requirements
                     .build())
                 .withTreatment(DefaultTrafficTreatment.builder().drop().build())
-                .withPriority(yourPriorityValue) // Set an appropriate priority for the rule
-                .fromApp(yourAppId) // Set your application ID
-                .makeTemporary(yourTimeout) // Set a timeout for the rule if needed
+                .withPriority(PacketPriority.CONTROL.priorityValue())
+                .forDevice(d.id())
+                .fromApp(L2FWD_APP)
+                .makeTemporary(30)
                 .build();
 
             // HINT2: apply withTreatment(DefaultTrafficTreatment.builder().drop().build()) to drop matched packet
