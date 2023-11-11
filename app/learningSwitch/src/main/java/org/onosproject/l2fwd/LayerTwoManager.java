@@ -107,6 +107,24 @@ public class LayerTwoManager implements LayerTwoService {
 
             // HINT: use DefaultFlowRule to match packets' src/dst address and port
             // HINT2: apply withTreatment(DefaultTrafficTreatment.builder().drop().build()) to drop matched packet
+            TrafficSelector.Builder selectorBuilder = DefaultTrafficSelector.builder();
+                selectorBuilder.matchEthType(Ethernet.TYPE_IPV4);
+                selectorBuilder.matchIPDst(dstIpAddress); 
+                selectorBuilder.matchIPSrc(srcIpAddress);
+                selectorBuilder.matchTcpDst(dstPort);
+
+            TrafficTreatment treatment = DefaultTrafficTreatment.builder()
+                .drop()
+                .build();
+
+            ForwardingObjective forwardingObjective = DefaultForwardingObjective.builder()
+                .withSelector(selectorBuilder.build())
+                .withTreatment(treatment)
+                .withPriority(100) 
+                .withFlag(ForwardingObjective.Flag.VERSATILE)
+                .add();
+
+            d.as(FlowRuleService.class).applyForwardingObjective(forwardingObjective);
         }
         return true;
     }
@@ -183,6 +201,10 @@ public class LayerTwoManager implements LayerTwoService {
              * [STEP 1] Extract Packet src/dstMac
              * HINT: use APIs in pc.inPacket().
              */
+            ConnectPoint cp = pc.inPacket().receivedFrom();
+            Map<MacAddress, PortNumber> macTable = macTables.get(cp.deviceId());
+            MacAddress srcMac = pc.inPacket().parsed().getSourceMAC();
+            MacAddress dstMac = pc.inPacket().parsed().getDestinationMAC();
 
             /**
              * [STEP 2] Insert new entry to the mactable
@@ -190,9 +212,8 @@ public class LayerTwoManager implements LayerTwoService {
              * HINT: create new MacTableEntry with in port [cp.port()] and a default duration 60 [Duration.ofSeconds(60)].
              * HINT: add the pair srcMac and macTableEntry to macTable.
              */
-
-            PortNumber outPort = null;
-
+            macTable.put(srcMac, cp.port());
+            
             /** 
              * [STEP 3] Lookup for destination host in MAC table
              * 
@@ -202,6 +223,7 @@ public class LayerTwoManager implements LayerTwoService {
              *      Insert the FlowRule to the designated output port.
              * Otherwise, we haven't learnt the output port yet. We need to flood this packet to all the ports.
              */
+            PortNumber outPort = macTable.get(dstMac);
 
             /**
              **
@@ -213,6 +235,30 @@ public class LayerTwoManager implements LayerTwoService {
              *              .forDevice(cp.deviceId()).withPriority(PacketPriority.REACTIVE.priorityValue())
              *              .fromApp(appId).build();
              */
+
+            /*
+             * If port is known, set pc's out port to the packet's learned output port and construct a
+             * FlowRule using a source, destination, treatment and other properties. Send the FlowRule
+             * to the designated output port.
+             */
+            if (outPort != null) {
+                pc.treatmentBuilder().setOutput(outPort);
+                FlowRule fr = DefaultFlowRule.builder()
+                        .withSelector(DefaultTrafficSelector.builder().matchEthDst(dstMac).build())
+                        .withTreatment(DefaultTrafficTreatment.builder().setOutput(outPort).build())
+                        .forDevice(cp.deviceId()).withPriority(PacketPriority.REACTIVE.priorityValue())
+                        .makeTemporary(60)
+                        .fromApp(appId).build();
+
+                flowRuleService.applyFlowRules(fr);
+                pc.send();
+            } else {
+            /*
+             * else, the output port has not been learned yet.  Flood the packet to all ports using
+             * the actLikeHub method
+             */
+                actLikeHub(pc);
+            }
         }
 
         /**

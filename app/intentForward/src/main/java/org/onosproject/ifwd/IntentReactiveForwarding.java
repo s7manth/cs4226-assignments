@@ -136,11 +136,17 @@ public class IntentReactiveForwarding {
             }
 
             /* Fetch incoming packet */
+            InboundPacket packet = context.inPacket();
+            Ethernet ethPacket = pacekt.parsed();
+
+            if (Object.isNull(ethPacket)) return;
 
             /** 
              * [STEP 1] Extract Ethernet header
              * more specifically, we need the source and destination IP address
              */
+            HostId sourceId = HostId.hostId(ethPacket.getSourceMAC());
+            HostId destinationId = HostId.hostId(ethPacket.getDestinationMAC());
 
             /** 
              * [STEP 2] Do we know where the destination host is and which host should we hand this packet to?
@@ -148,6 +154,14 @@ public class IntentReactiveForwarding {
              * Otherwise, just forward it to the next hop and processing is done.
              * * HINT: use setUpConnectivity() to install flow rule
              */
+            Host dst = hostService.getHost(destinationId);
+            if (Object.isNull(dst)) {
+                flood(context);
+                return;
+            }
+
+            setUpConnectivity(context, sourceId, destinationId);
+            forwardPacketToDst(context, dst);
         }
     }
 
@@ -158,7 +172,8 @@ public class IntentReactiveForwarding {
      * @param portNumber the specified port through which this packet will be send out
      */
     private void packetOut(PacketContext context, PortNumber portNumber) {
-
+        context.treatmentBuilder().setOutput(portNumber);
+        context.send();
     }
 
     /**
@@ -183,6 +198,11 @@ public class IntentReactiveForwarding {
      */
     private void forwardPacketToDst(PacketContext context, Host dst) {
         /* Build and send out packet to destination host */
+        TrafficTreatment treatment = DefaultTrafficTreatment.builder().setOutput(dst.location().port()).build();
+        OutboundPacket packet = new DefaultOutboundPacket(dst.location().deviceId(),
+                                                          treatment, context.inPacket().unparsed());
+        packetService.emit(packet);
+        log.info("sending packet: {}", packet);
     }
 
     /* Install a rule forwarding the packet to the specified port. */
@@ -200,10 +220,18 @@ public class IntentReactiveForwarding {
         HostToHostIntent intent = (HostToHostIntent) intentService.getIntent(key);
         if (intent != null) {
             if (WITHDRAWN_STATES.contains(intentService.getIntentState(key))) {
-                /* This intent has been withdrawn, just insert it once more! */
+                /* This intent has been withdrawn, just insert it once more! 
+                   Build host-to-host intent and submit to Intent Service */
+                HostToHostIntent hostIntent = HostToHostIntent.builder()
+                        .appId(appId)
+                        .key(key)
+                        .one(srcId)
+                        .two(dstId)
+                        .selector(selector)
+                        .treatment(treatment)
+                        .build();
 
-                /* Build host-to-host intent and submit to Intent Service */
-                HostToHostIntent hostIntent;
+                intentService.submit(hostIntent);
             } else if (intentService.getIntentState(key) == IntentState.FAILED) {
                 /* Special case: handle failed intent */
                 TrafficSelector objectiveSelector = DefaultTrafficSelector.builder()
@@ -227,7 +255,16 @@ public class IntentReactiveForwarding {
              */
 
             /* Build host-to-host intent and submit to Intent Service */
-            HostToHostIntent hostIntent;
+            HostToHostIntent hostIntent = HostToHostIntent.builder()
+                    .appId(appId)
+                    .key(key)
+                    .one(srcId)
+                    .two(dstId)
+                    .selector(selector)
+                    .treatment(treatment)
+                    .build();
+
+            intentService.submit(hostIntent);
         }
 
     }
