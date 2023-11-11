@@ -21,6 +21,7 @@ class TreeTopo( Topo ):
       lines = f.readlines()
     
     config = [int(x) for x in lines[0].split()]
+    print("config", config)
     self.nHosts = config[0]
     self.nSwitches = config[1]
     self.nLinks = config[2]
