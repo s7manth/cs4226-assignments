@@ -107,24 +107,22 @@ public class LayerTwoManager implements LayerTwoService {
 
             // HINT: use DefaultFlowRule to match packets' src/dst address and port
             // HINT2: apply withTreatment(DefaultTrafficTreatment.builder().drop().build()) to drop matched packet
-            TrafficSelector.Builder selectorBuilder = DefaultTrafficSelector.builder();
-                selectorBuilder.matchEthType(Ethernet.TYPE_IPV4);
-                selectorBuilder.matchIPDst(dstIpAddress); 
-                selectorBuilder.matchIPSrc(srcIpAddress);
-                selectorBuilder.matchTcpDst(dstPort);
-
-            TrafficTreatment treatment = DefaultTrafficTreatment.builder()
-                .drop()
+            DefaultFlowRule firewallRule = DefaultFlowRule.builder()
+                .forDevice(d.id())
+                .withSelector(DefaultTrafficSelector.builder()
+                    .matchIPSrc(srcIpAddress)
+                    .matchIPDst(dstIpAddress)
+                    .matchTcpDst(dstPort)
+                    // You might need additional match criteria depending on your requirements
+                    .build())
+                .withTreatment(DefaultTrafficTreatment.builder().drop().build())
+                .withPriority(yourPriorityValue) // Set an appropriate priority for the rule
+                .fromApp(yourAppId) // Set your application ID
+                .makeTemporary(yourTimeout) // Set a timeout for the rule if needed
                 .build();
 
-            ForwardingObjective forwardingObjective = DefaultForwardingObjective.builder()
-                .withSelector(selectorBuilder.build())
-                .withTreatment(treatment)
-                .withPriority(100) 
-                .withFlag(ForwardingObjective.Flag.VERSATILE)
-                .add();
-
-            d.as(FlowRuleService.class).applyForwardingObjective(forwardingObjective);
+            // HINT2: apply withTreatment(DefaultTrafficTreatment.builder().drop().build()) to drop matched packet
+            flowRuleService.applyFlowRules(firewallRule); // Apply the firewall rule to the device
         }
         return true;
     }
