@@ -12,7 +12,7 @@ class TreeTopo( Topo ):
   Tree topology
   """
 
-  def __init__(self, infileName = "ring.in"):
+  def __init__(self, infileName = "star.in"):
     Topo.__init__(self)
     self.infileName = infileName
     
