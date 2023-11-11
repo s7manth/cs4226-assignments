@@ -27,7 +27,7 @@ class TreeTopo(Topo):
     nHosts = config[0]
     nSwitches = config[1]
     nLinks = config[2]
-    links = [tuple(x.split(',')) for x in lines[1:]]
+    links = [tuple(x.strip().split(',')) for x in lines[1:]]
 
     # Add hosts
     for h in range(1, nHosts + 1):
