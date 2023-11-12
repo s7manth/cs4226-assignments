@@ -36,6 +36,7 @@ import org.onosproject.net.flowobjective.FlowObjectiveService;
 import org.onosproject.net.flowobjective.ForwardingObjective;
 import org.onosproject.net.host.HostService;
 import org.onosproject.net.intent.HostToHostIntent;
+import org.onosproject.net.intent.Intent;
 import org.onosproject.net.intent.IntentService;
 import org.onosproject.net.intent.IntentState;
 import org.onosproject.net.intent.Key;
@@ -262,6 +263,7 @@ public class IntentReactiveForwarding {
                     .two(dstId)
                     .selector(selector)
                     .treatment(treatment)
+                    .priority(Intent.DEFAULT_INTENT_PRIORITY)
                     .build();
 
             intentService.submit(hostIntent);

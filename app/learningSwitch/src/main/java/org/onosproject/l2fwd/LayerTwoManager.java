@@ -108,16 +108,24 @@ public class LayerTwoManager implements LayerTwoService {
             // HINT: use DefaultFlowRule to match packets' src/dst address and port
             // HINT2: apply withTreatment(DefaultTrafficTreatment.builder().drop().build()) to drop matched packet
             FlowRule firewallRule = DefaultFlowRule.builder()
-                .withSelector(DefaultTrafficSelector.builder()
-                    .matchIPSrc(srcIpAddress.toIpPrefix())
-                    .matchIPDst(dstIpAddress.toIpPrefix())
-                    .matchTcpDst(TpPort.tpPort((int) dstPort.toLong()))
-                    .build())
-                .withTreatment(DefaultTrafficTreatment.builder().drop().build())
+                .withSelector(
+                    DefaultTrafficSelector.builder()
+                        .matchEthType(TYPE_IPV4)
+                        .matchIPSrc(srcIpAddress.toIpPrefix())
+                        .matchIPDst(dstIpAddress.toIpPrefix())
+                        .matchIPProtocol(IPv4.PROTOCOL_TCP)
+                        .matchTcpDst(TpPort.tpPort((int) dstPort.toLong()))
+                        .build()
+                    )
+                .withTreatment(
+                    DefaultTrafficTreatment.builder()
+                    .drop()
+                    .build()
+                    )
                 .withPriority(PacketPriority.CONTROL.priorityValue())
                 .forDevice(d.id())
                 .fromApp(appId)
-                .makeTemporary(30)
+                .makeTemporary(60)
                 .build();
 
             // HINT2: apply withTreatment(DefaultTrafficTreatment.builder().drop().build()) to drop matched packet
@@ -198,7 +206,7 @@ public class LayerTwoManager implements LayerTwoService {
              * [STEP 1] Extract Packet src/dstMac
              * HINT: use APIs in pc.inPacket().
              */
-            Map<MacAddress, MacTableEntry> macTable = macTables.get(cp.deviceId());
+            Map<MacAddress, MacTableEntry> mt = macTables.get(cp.deviceId());
             MacAddress srcMac = pc.inPacket().parsed().getSourceMAC();
             MacAddress dstMac = pc.inPacket().parsed().getDestinationMAC();
 
@@ -208,7 +216,8 @@ public class LayerTwoManager implements LayerTwoService {
              * HINT: create new MacTableEntry with in port [cp.port()] and a default duration 60 [Duration.ofSeconds(60)].
              * HINT: add the pair srcMac and macTableEntry to macTable.
              */
-            macTable.put(srcMac, new MacTableEntry(cp.port(), Duration.ofSeconds(60)));
+            macTables.computeIfAbsent(cp.deviceId(), temp -> new ConcurrentHashMap<>())
+                .put(srcMac, new MacTableEntry(cp.port(), Duration.ofSeconds(60)));
             
             /** 
              * [STEP 3] Lookup for destination host in MAC table
@@ -219,7 +228,10 @@ public class LayerTwoManager implements LayerTwoService {
              *      Insert the FlowRule to the designated output port.
              * Otherwise, we haven't learnt the output port yet. We need to flood this packet to all the ports.
              */
-            PortNumber outPort = macTable.get(dstMac).getPortNumber();
+            if (mt == null) return;
+            MacTableEntry dEntry = mt.get(dstMac);
+            if (dEntry == null) return;
+            PortNumber outPort = dEntry.getPortNumber();
 
             /**
              **
@@ -239,9 +251,18 @@ public class LayerTwoManager implements LayerTwoService {
              */
             if (outPort != null) {
                 pc.treatmentBuilder().setOutput(outPort);
+
                 FlowRule fr = DefaultFlowRule.builder()
-                        .withSelector(DefaultTrafficSelector.builder().matchEthDst(dstMac).build())
-                        .withTreatment(DefaultTrafficTreatment.builder().setOutput(outPort).build())
+                        .withSelector(
+                            DefaultTrafficSelector.builder()
+                                .matchEthDst(dstMac)
+                                .build()
+                            )
+                        .withTreatment(
+                            DefaultTrafficTreatment.builder()
+                                .setOutput(outPort)
+                                .build()
+                            )
                         .forDevice(cp.deviceId()).withPriority(PacketPriority.REACTIVE.priorityValue())
                         .makeTemporary(60)
                         .fromApp(appId).build();
@@ -249,10 +270,6 @@ public class LayerTwoManager implements LayerTwoService {
                 flowRuleService.applyFlowRules(fr);
                 pc.send();
             } else {
-            /*
-             * else, the output port has not been learned yet.  Flood the packet to all ports using
-             * the actLikeHub method
-             */
                 flood(pc);
             }
         }
