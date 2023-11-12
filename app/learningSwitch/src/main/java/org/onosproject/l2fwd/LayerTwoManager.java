@@ -228,10 +228,14 @@ public class LayerTwoManager implements LayerTwoService {
              *      Insert the FlowRule to the designated output port.
              * Otherwise, we haven't learnt the output port yet. We need to flood this packet to all the ports.
              */
-            if (mt == null) return;
-            MacTableEntry dEntry = mt.get(dstMac);
-            if (dEntry == null) return;
-            PortNumber outPort = dEntry.getPortNumber();
+
+            PortNumber outPort = null;
+
+            if (mt != null) {
+                MacTableEntry dEntry = mt.get(dstMac);
+                if (dEntry != null) outPort = dEntry.getPortNumber();
+            }
+            
 
             /**
              **
