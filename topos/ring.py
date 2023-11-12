@@ -28,9 +28,9 @@ class TreeTopo(Topo):
     nSwitches = config[1]
     nLinks = config[2]
 
-    print(f"Number of Hosts: {nHosts}")
-    print(f"Number of Switches: {nSwitches}")
-    print(f"Number of Links: {nLinks}")
+    print("Number of Hosts: ", nHosts)
+    print("Number of Switches: ", nSwitches)
+    print("Number of Links: ", nLinks)
 
     links = [tuple(x.strip().split(",")) for x in lines[1:]]
 
