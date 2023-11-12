@@ -17,7 +17,7 @@ class TreeTopo(Topo):
     Topo.__init__(self)
 
   def build(self):
-    infileName = "star.in"
+    infileName = "ring.in"
 
     with open(infileName, "r+") as f:
       lines = f.readlines()
