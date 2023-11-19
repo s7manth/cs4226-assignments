@@ -22,7 +22,7 @@ class Topology(Topo):
         }
         
         # Nodes
-        r110, r120, r130, r210, r310, r410 = [self.addNode(name=n, loopback=l, cls=FRRRouter) for n, l in nodes_with_loopbacks]
+        r110, r120, r130, r210, r310, r410 = [self.addNode(name=n, loopback=l, cls=FRRRouter) for n, l in nodes_with_loopbacks.items()]
 
         hosts = {
             "h211": {
@@ -44,7 +44,7 @@ class Topology(Topo):
         }
 
         # Hosts
-        h211, h311, h411, h412 = [self.addHost(name=h, ip=details["ip"], defaultRoute=details["droute"]) for h, details in hosts]
+        h211, h311, h411, h412 = [self.addHost(name=h, ip=details["ip"], defaultRoute=details["droute"]) for h, details in hosts.items()]
 
         # Links (Between routers and hosts)
         self.addLink(
