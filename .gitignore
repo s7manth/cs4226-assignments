@@ -1,6 +1,9 @@
 # Python Virtual Environment
 .venv/
 
+# Mac Garbage
+.DS_Store
+
 # Binaries 
-app/learningSwitch/target
-app/intentForward/target
+target/
+
