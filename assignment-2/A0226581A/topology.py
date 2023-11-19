@@ -22,14 +22,10 @@ class Topology(Topo):
         }
 
         # Nodes
-<<<<<<< Updated upstream
-        r110, r120, r130, r210, r310, r410 = [self.addNode(name=n, loopback=l, cls=FRRRouter) for n, l in nodes_with_loopbacks.items()]
-=======
         r110, r120, r130, r210, r310, r410 = [
             self.addNode(name=n, loopback=l, cls=FRRRouter)
             for n, l in nodes_with_loopbacks
         ]
->>>>>>> Stashed changes
 
         hosts = {
             "h211": {"ip": "10.2.1.1/24", "droute": "via 10.2.1.254"},
@@ -39,14 +35,10 @@ class Topology(Topo):
         }
 
         # Hosts
-<<<<<<< Updated upstream
-        h211, h311, h411, h412 = [self.addHost(name=h, ip=details["ip"], defaultRoute=details["droute"]) for h, details in hosts.items()]
-=======
         h211, h311, h411, h412 = [
             self.addHost(name=h, ip=details["ip"], defaultRoute=details["droute"])
             for h, details in hosts
         ]
->>>>>>> Stashed changes
 
         # Links (Between routers and hosts)
         self.addLink(
