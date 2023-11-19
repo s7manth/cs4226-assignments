@@ -7,3 +7,8 @@
 # Binaries 
 target/
 
+# PyCache
+__pycache__/
+
+# Logs 
+*.log 
